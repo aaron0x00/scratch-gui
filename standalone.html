@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#1769d2">
+<title>Block Studio — Single-file editor</title>
+<style>
+:root{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#17243a;background:#edf3fa;font-synthesis:none}
+*{box-sizing:border-box}body{margin:0;min-height:100vh}button,input{font:inherit}button{cursor:pointer;border:0}
+.topbar{height:58px;background:#145fc2;color:white;display:flex;align-items:center;gap:14px;padding:0 18px;box-shadow:0 2px 8px #153c7026}
+.logo{font-weight:850;font-size:19px;letter-spacing:-.5px}.logo span{color:#bfe3ff}.project-name{background:#ffffff20;color:white;border:1px solid #ffffff40;border-radius:8px;padding:7px 10px;min-width:150px}
+.top-actions{margin-left:auto;display:flex;gap:8px}.top-actions button,.action{border-radius:8px;padding:8px 13px;font-weight:700}.primary{background:#1b9a62;color:#fff}.light{background:#fff;color:#164f9a}.danger{background:#e34e58;color:white}
+main{padding:14px;max-width:1600px;margin:auto}.toolbar{display:flex;align-items:center;gap:9px;margin-bottom:12px;flex-wrap:wrap}.toolbar .hint{color:#61738b;font-size:13px;margin-left:auto}
+.workspace{display:grid;grid-template-columns:190px minmax(300px,1fr) minmax(310px,42%);gap:12px;min-height:calc(100vh - 112px)}
+.panel{background:white;border:1px solid #d7e1ed;border-radius:12px;overflow:hidden;min-width:0;box-shadow:0 2px 8px #183d6410}
+.panel-title{padding:12px 14px;font-weight:800;border-bottom:1px solid #e5ebf2;display:flex;justify-content:space-between;align-items:center}
+.category-list{padding:9px;display:flex;flex-direction:column;gap:6px}.category{padding:10px 11px;border-radius:8px;text-align:left;color:#fff;font-weight:750;display:flex;gap:9px;align-items:center;opacity:.88}.category.active,.category:hover{opacity:1;outline:3px solid #1b293d18}
+.cat-motion{background:#4c91df}.cat-looks{background:#9657cb}.cat-events{background:#d6a329}.cat-control{background:#e28b32}.cat-sound{background:#c64d83}.cat-variables{background:#d05a48}
+.palette{padding:12px;display:flex;flex-direction:column;gap:9px;overflow:auto;max-height:calc(100vh - 180px)}
+.block{color:#fff;font-size:13px;font-weight:750;padding:10px 12px;border-radius:8px;box-shadow:inset 0 -3px #00000016;cursor:grab;user-select:none;display:flex;align-items:center;gap:7px;min-height:38px}
+.block:active{cursor:grabbing}.block input{width:48px;border:0;border-radius:5px;padding:3px 5px;color:#273449;font-weight:700}
+.motion{background:#4c91df}.looks{background:#9657cb}.events{background:#d6a329}.control{background:#e28b32}.sound{background:#c64d83}
+.scripts-panel{display:flex;flex-direction:column}.scripts-head{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid #e5ebf2}.scripts-head strong{font-size:15px}.scripts-head button{background:#edf4fc;color:#235a9d;border-radius:7px;padding:6px 9px;font-weight:700}
+.script-area{position:relative;flex:1;min-height:460px;padding:18px;overflow:auto;background-color:#f8fbff;background-image:radial-gradient(#cbd8e7 1px,transparent 1px);background-size:18px 18px}
+.script-stack{min-height:100%;display:flex;flex-direction:column;align-items:flex-start;gap:5px}.script-stack:empty:after{content:"Drag blocks here, or click a block in the palette.";color:#8190a4;font-size:14px;margin:30px 8px}
+.script-stack .block{min-width:210px;max-width:100%;position:relative}.script-stack .block .remove{margin-left:auto;background:#ffffff30;color:white;border-radius:5px;padding:1px 6px}
+.right-column{display:flex;flex-direction:column;gap:12px;min-width:0}.stage-panel{padding-bottom:12px}.stage-head{padding:12px 14px;display:flex;justify-content:space-between;align-items:center}.stage-head strong{font-size:15px}.stage{width:min(100% - 24px,480px);aspect-ratio:4/3;margin:0 auto;background:linear-gradient(#eaf7ff,#fff);border:2px solid #d6e4f1;border-radius:8px;position:relative;overflow:hidden}
+.stage:before{content:"";position:absolute;inset:auto 0 0;height:28%;background:#dff1dc;border-top:2px solid #c9e4c4}
+.sprite{position:absolute;left:50%;top:48%;transform:translate(-50%,-50%);font-size:60px;filter:drop-shadow(0 5px 2px #0002);transition:left .25s,top .25s,transform .25s;z-index:1}
+.bubble{position:absolute;z-index:2;left:50%;top:13%;transform:translateX(-50%);background:#fff;border:2px solid #27364b;border-radius:15px;padding:7px 12px;box-shadow:0 2px 4px #0002;display:none;max-width:80%;font-size:13px}
+.sprite-list{display:flex;gap:8px;padding:12px 14px 0;align-items:center;flex-wrap:wrap}.sprite-card{border:2px solid #dce6f0;background:#f7faff;border-radius:9px;padding:7px 10px;display:flex;align-items:center;gap:7px;font-size:13px;font-weight:700}.sprite-card.selected{border-color:#2878d1;background:#eaf4ff}.sprite-card span{font-size:22px}.add-sprite{border:1px dashed #9db3ca;background:white;border-radius:9px;padding:8px 11px;color:#315f8d;font-weight:700}
+.info{font-size:12px;color:#6f8094;padding:0 14px}.status{padding:9px 14px;background:#f7faff;border-top:1px solid #e5ebf2;color:#63758c;font-size:12px}
+@media(max-width:980px){.workspace{grid-template-columns:155px 1fr}.right-column{grid-column:1/-1;display:grid;grid-template-columns:1fr 1fr}.stage{width:min(100% - 20px,400px)}}
+@media(max-width:620px){main{padding:8px}.workspace{grid-template-columns:1fr}.category-list{flex-direction:row;overflow:auto}.category{white-space:nowrap}.palette{max-height:230px}.right-column{grid-template-columns:1fr}.toolbar .hint{width:100%;margin:0}.topbar{padding:0 10px}.project-name{min-width:90px;width:115px}}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="logo">▣ Block<span>Studio</span></div>
+  <input class="project-name" aria-label="Project name" value="My first project">
+  <div class="top-actions"><button class="light" id="reset">Reset</button><button class="primary" id="run">▶ Run</button><button class="danger" id="stop">■ Stop</button></div>
+</header>
+<main>
+  <div class="toolbar"><button class="action light" id="newScript">＋ New script</button><button class="action light" id="clear">Clear workspace</button><span class="hint">A tiny, self-contained block-coding playground · saves in this browser</span></div>
+  <section class="workspace">
+    <aside class="panel">
+      <div class="panel-title">Block categories</div>
+      <div class="category-list">
+        <button class="category cat-motion active" data-cat="motion">↗ Motion</button>
+        <button class="category cat-looks" data-cat="looks">◉ Looks</button>
+        <button class="category cat-events" data-cat="events">⚑ Events</button>
+        <button class="category cat-control" data-cat="control">↻ Control</button>
+        <button class="category cat-sound" data-cat="sound">♫ Sound</button>
+      </div>
+      <div class="info">Choose a category, then drag or click a block to add it.</div>
+    </aside>
+    <section class="panel scripts-panel">
+      <div class="scripts-head"><strong>Code workspace</strong><button id="save">Save project</button></div>
+      <div class="script-area" id="scriptArea"><div class="script-stack" id="stack" aria-label="Script blocks"></div></div>
+      <div class="status" id="status">Ready. Add some blocks and press Run!</div>
+    </section>
+    <section class="right-column">
+      <div class="panel stage-panel">
+        <div class="stage-head"><strong>Stage</strong><span class="info">480 × 360</span></div>
+        <div class="stage" id="stage"><div class="bubble" id="bubble"></div><div class="sprite" id="sprite">🐱</div></div>
+        <div class="sprite-list"><button class="sprite-card selected" id="catSprite"><span>🐱</span> Sprite 1</button><button class="add-sprite" id="addSprite">＋ Add sprite</button></div>
+      </div>
+      <div class="panel">
+        <div class="panel-title">Getting started</div>
+        <div style="padding:12px 14px;font-size:13px;line-height:1.65;color:#53667d">
+          <b>1.</b> Pick a block category.<br><b>2.</b> Add blocks to your script.<br><b>3.</b> Press <b>Run</b> to see your sprite move!<br><br>
+          This is an original mini editor prototype. It runs locally in one HTML file and does not need an account, server, or API key.
+        </div>
+      </div>
+    </section>
+  </section>
+</main>
+<script>
+(() => {
+ const definitions = {
+  motion:[["move","Move","10","steps"],["turn","Turn","15","degrees"],["goto","Go to x","0",""],["glide","Glide","1","seconds"],["bounce","Bounce at edge","",""]],
+  looks:[["say","Say","Hello!",""],["think","Think","Hmm...",""],["size","Set size","100","%"],["hide","Hide","",""],["show","Show","",""]],
+  events:[["greenflag","When green flag clicked","",""],["clicksprite","When sprite clicked","",""]],
+  control:[["wait","Wait","1","seconds"],["repeat","Repeat","3","times"]],
+  sound:[["sound","Play a sound","",""]]
+ };
+ const colors={motion:"motion",looks:"looks",events:"events",control:"control",sound:"sound"};
+ const stack=document.getElementById("stack"),palette=document.createElement("div");palette.className="palette";
+ const status=document.getElementById("status"),sprite=document.getElementById("sprite"),bubble=document.getElementById("bubble"),stage=document.getElementById("stage");
+ let category="motion",running=false,runToken=0,x=50,y=48,angle=0,visible=true,scale=1,script=[];
+ const makeBlock=(def,place=false)=>{const [type,label,value,unit]=def;const el=document.createElement("div");el.className="block "+(colors[category]||"motion");el.draggable=!place;el.dataset.type=type;el.dataset.label=label;
+  const text=document.createElement("span");text.textContent=label;el.append(text);
+  if(value!==""){const input=document.createElement("input");input.value=value;input.setAttribute("aria-label",label+" value");input.addEventListener("click",e=>e.stopPropagation());input.addEventListener("input",()=>{const i=script.findIndex(b=>b.id===el.dataset.id);if(i>=0){script[i].value=input.value;persist()}});el.append(input)}
+  if(unit){const u=document.createElement("span");u.textContent=unit;el.append(u)}
+  if(place){const rm=document.createElement("button");rm.className="remove";rm.textContent="×";rm.title="Remove block";rm.onclick=e=>{e.stopPropagation();script=script.filter(b=>b.id!==el.dataset.id);el.remove();persist()};el.append(rm)}
+  el.addEventListener("dragstart",e=>e.dataTransfer.setData("text/plain",JSON.stringify({type,label,value,unit,cat:category})));
+  el.addEventListener("click",()=>{if(!place)addBlock({type,label,value,unit,cat:category})});
+  return el;
+ };
+ function renderPalette(){palette.replaceChildren();(definitions[category]||[]).forEach(d=>palette.append(makeBlock(d)));const old=document.querySelector(".palette");if(old)old.replaceWith(palette);else document.querySelector(".scripts-panel").before(palette)}
+ function addBlock(b){const item={...b,id:Math.random().toString(36).slice(2)};script.push(item);const el=makeBlock([item.type,item.label,item.value,item.unit],true);el.dataset.id=item.id;stack.append(el);persist();status.textContent="Added: "+item.label}
+ document.querySelectorAll(".category").forEach(btn=>btn.addEventListener("click",()=>{category=btn.dataset.cat;document.querySelectorAll(".category").forEach(b=>b.classList.toggle("active",b===btn));renderPalette()}));
+ stack.addEventListener("dragover",e=>e.preventDefault());
+ stack.addEventListener("drop",e=>{e.preventDefault();try{const b=JSON.parse(e.dataTransfer.getData("text/plain"));addBlock(b)}catch{}});
+ function updateSprite(){sprite.style.left=x+"%";sprite.style.top=y+"%";sprite.style.transform="translate(-50%,-50%) rotate("+angle+"deg) scale("+scale+")";sprite.style.display=visible?"block":"none"}
+ const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+ async function run(){stop();running=true;const token=++runToken;status.textContent="Running your script…";for(const b of script){if(token!==runToken)break;const n=Number(b.value)||0;
+  switch(b.type){
+   case "move":{const rad=angle*Math.PI/180;x=Math.max(5,Math.min(95,x+Math.cos(rad)*n/4));y=Math.max(8,Math.min(88,y+Math.sin(rad)*n/4));updateSprite();break}
+   case "turn":angle+=n;updateSprite();break;
+   case "goto":x=Math.max(5,Math.min(95,n/4+50));updateSprite();break;
+   case "glide":await pause(Math.min(3000,Math.max(100,n*1000)));break;
+   case "bounce":if(x<10||x>90)angle=180-angle;if(y<10||y>85)angle=-angle;updateSprite();break;
+   case "say":case "think":bubble.textContent=b.value;bubble.style.display="block";break;
+   case "size":scale=Math.max(.2,Math.min(3,n/100));updateSprite();break;
+   case "hide":visible=false;updateSprite();break;case "show":visible=true;updateSprite();break;
+   case "wait":await pause(Math.min(5000,Math.max(0,n*1000)));break;
+   case "repeat":status.textContent="Repeat blocks are coming in the next update.";break;
+   case "sound":status.textContent="Sound block added (audio is planned).";break;
+   case "greenflag":case "clicksprite":break;
+  }await pause(180);
+ }if(token===runToken){running=false;status.textContent="Finished! Press Run to play again."}}
+ function stop(){runToken++;running=false;status.textContent="Stopped."}
+ document.getElementById("run").onclick=run;document.getElementById("stop").onclick=stop;
+ function reset(){stop();x=50;y=48;angle=0;scale=1;visible=true;bubble.style.display="none";updateSprite();status.textContent="Stage reset."}
+ document.getElementById("reset").onclick=reset;
+ document.getElementById("clear").onclick=()=>{stop();script=[];stack.replaceChildren();persist();status.textContent="Workspace cleared."};
+ document.getElementById("newScript").onclick=()=>{stack.append(document.createElement("div")).className="info";status.textContent="A new script area is ready (single script in this prototype)."};
+ document.getElementById("addSprite").onclick=()=>{const choices=["🐶","🐸","🦊","🐼","🐧","🦄"];sprite.textContent=choices[Math.floor(Math.random()*choices.length)];status.textContent="Added a new character!"};
+ document.getElementById("catSprite").onclick=()=>{sprite.textContent="🐱";document.getElementById("catSprite").classList.add("selected")};
+ function persist(){try{localStorage.setItem("blockStudioProject",JSON.stringify({script,project:document.querySelector(".project-name").value}))}catch{}}
+ function load(){try{const saved=JSON.parse(localStorage.getItem("blockStudioProject")||"null");if(saved){document.querySelector(".project-name").value=saved.project||"My first project";(saved.script||[]).forEach(b=>addBlock(b));status.textContent="Loaded your saved project."}}catch{}}
+ document.getElementById("save").onclick=()=>{persist();status.textContent="Project saved in this browser."};
+ document.querySelector(".project-name").addEventListener("input",persist);
+ renderPalette();load();updateSprite();
+})();
+</script>
+</body>
+</html>
